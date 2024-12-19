@@ -1,69 +1,100 @@
 let map;
 let markers = [];
+let searchBox;
+let currentInfoWindow = null;
 
 function initMap() {
-    // Wait for the DOM to be fully loaded
-    if (!document.getElementById('map')) {
-        console.error('Map container not found');
-        return;
-    }
-
     // Center on Netherlands
-    const netherlands = [52.1326, 5.2913];
+    const netherlands = { lat: 52.1326, lng: 5.2913 };
     
-    // Initialize the map with specific options
-    map = L.map('map', {
+    map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 7,
         center: netherlands,
-        zoom: 8,
-        minZoom: 6,
-        maxZoom: 18,
-        scrollWheelZoom: true,
-        zoomControl: true
-    });
-    
-    // Add OpenStreetMap tiles with proper attribution
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: ' OpenStreetMap contributors',
-        maxZoom: 18
-    }).addTo(map);
-
-    // Custom marker icon
-    const customIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
+        mapTypeControl: true,
+        fullscreenControl: true,
+        streetViewControl: true,
+        styles: [
+            {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }]
+            }
+        ]
     });
 
-    // Add markers for each court
-    window.padelApp.courts.forEach(court => {
-        addMarker(court, customIcon);
+    // Initialize search box
+    const input = document.getElementById("location-search");
+    searchBox = new google.maps.places.SearchBox(input);
+
+    // Bias SearchBox results towards current map's viewport
+    map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
     });
 
-    // Fit bounds to show all markers
-    if (markers.length > 0) {
-        const group = new L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.1));
-    }
+    // Listen for the event fired when the user selects a prediction
+    searchBox.addListener("places_changed", () => {
+        const places = searchBox.getPlaces();
+
+        if (places.length === 0) return;
+
+        // For each place, get the location.
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach((place) => {
+            if (!place.geometry || !place.geometry.location) return;
+
+            if (place.geometry.viewport) {
+                bounds.union(place.geometry.viewport);
+            } else {
+                bounds.extend(place.geometry.location);
+            }
+        });
+        
+        map.fitBounds(bounds);
+        // Update nearby courts
+        findNearbyCourts(places[0].geometry.location);
+    });
+
+    // Load courts and add markers
+    loadCourtsAndMarkers();
 }
 
-function addMarker(court, customIcon) {
-    if (!court.coordinates || !court.coordinates.lat || !court.coordinates.lng) {
-        console.error('Invalid coordinates for court:', court.name);
-        return;
-    }
+function findNearbyCourts(location) {
+    const courts = window.padelApp.courts || [];
+    courts.forEach(court => {
+        const courtLocation = new google.maps.LatLng(court.coordinates.lat, court.coordinates.lng);
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(location, courtLocation) / 1000; // Convert to km
+        
+        // Update court distance
+        court.distance = Math.round(distance * 10) / 10;
+    });
 
-    const marker = L.marker([court.coordinates.lat, court.coordinates.lng], {
-        icon: customIcon,
-        title: court.name
-    }).addTo(map);
+    // Sort courts by distance
+    courts.sort((a, b) => a.distance - b.distance);
 
-    const popupContent = `
-        <div class="p-4 min-w-[200px]">
+    // Update markers to show distance
+    updateMarkers(courts);
+}
+
+function loadCourtsAndMarkers() {
+    const courts = window.padelApp.courts || [];
+    updateMarkers(courts);
+}
+
+function createInfoWindowContent(court) {
+    const features = court.features.map(feature => 
+        `<span class="inline-block bg-gray-200 rounded-full px-2 py-1 text-xs font-semibold text-gray-700 mr-1 mb-1">${feature}</span>`
+    ).join('');
+    
+    const distanceText = court.distance ? `<p class="text-sm text-gray-600 mb-2">Afstand: ${court.distance} km</p>` : '';
+    
+    return `
+        <div class="p-4 max-w-sm">
+            <div class="mb-4">
+                <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-32 object-cover rounded">
+            </div>
             <h3 class="font-bold text-lg mb-2">${court.name}</h3>
             <p class="text-gray-600 mb-2">${court.location}</p>
+            ${distanceText}
             <div class="flex items-center mb-2">
                 <span class="text-yellow-400">★</span>
                 <span class="ml-1 font-semibold">${court.rating}</span>
@@ -73,6 +104,9 @@ function addMarker(court, customIcon) {
                 <span class="font-bold">€${court.pricePerHour}</span>
                 <span class="text-gray-600">/uur</span>
             </p>
+            <div class="mb-3 flex flex-wrap gap-1">
+                ${features}
+            </div>
             <button 
                 onclick="window.padelApp.openBooking(${court.id})"
                 class="w-full bg-blue-600 text-white px-4 py-2 rounded text-center hover:bg-blue-700 transition-colors"
@@ -81,51 +115,54 @@ function addMarker(court, customIcon) {
             </button>
         </div>
     `;
-
-    marker.bindPopup(popupContent, {
-        maxWidth: 300,
-        minWidth: 200,
-        className: 'court-popup'
-    });
-
-    markers.push(marker);
 }
 
-function updateMarkers(filteredCourts) {
+function updateMarkers(courts) {
     // Clear existing markers
-    markers.forEach(marker => marker.remove());
-    markers = [];
+    clearMarkers();
 
     // Add new markers
-    filteredCourts.forEach(court => {
-        addMarker(court);
+    courts.forEach(court => {
+        const marker = new google.maps.Marker({
+            position: { lat: court.coordinates.lat, lng: court.coordinates.lng },
+            map: map,
+            title: court.name,
+            animation: google.maps.Animation.DROP
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: createInfoWindowContent(court),
+            maxWidth: 320
+        });
+
+        marker.addListener("click", () => {
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
+            infoWindow.open(map, marker);
+            currentInfoWindow = infoWindow;
+        });
+
+        markers.push(marker);
     });
 
-    // Fit bounds to show all markers
-    if (markers.length > 0) {
-        const group = new L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.1));
+    // Fit bounds to show all markers if we're not searching
+    if (!courts[0]?.distance && markers.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        markers.forEach(marker => bounds.extend(marker.getPosition()));
+        map.fitBounds(bounds);
     }
 }
 
-// Add custom styles for the popup
-const style = document.createElement('style');
-style.textContent = `
-    .court-popup .leaflet-popup-content-wrapper {
-        border-radius: 8px;
-        padding: 0;
+function clearMarkers() {
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+    
+    if (currentInfoWindow) {
+        currentInfoWindow.close();
+        currentInfoWindow = null;
     }
-    .court-popup .leaflet-popup-content {
-        margin: 0;
-    }
-    .court-popup .leaflet-popup-tip-container {
-        margin-top: -1px;
-    }
-`;
-document.head.appendChild(style);
-
-// Initialize map when the page loads
-document.addEventListener('DOMContentLoaded', initMap);
+}
 
 // Expose functions to window
 window.padelApp = {
