@@ -168,5 +168,6 @@ function clearMarkers() {
 window.padelApp = {
     ...window.padelApp,
     initMap,
-    updateMarkers
+    findNearbyCourts,
+    updateMapMarkers: updateMarkers
 };

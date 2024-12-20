@@ -162,19 +162,19 @@
                     <!-- Price Range -->
                     <div class="mb-6">
                         <h4 class="font-medium mb-2">Prijsklasse</h4>
-                        <input 
-                            type="range" 
-                            id="price-range" 
-                            min="0" 
-                            max="100" 
-                            value="100"
-                            class="w-full"
-                            oninput="updatePriceLabel(this.value)"
-                            onchange="applyFilters()"
-                        >
-                        <div class="flex justify-between text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
                             <span>€0</span>
-                            <span id="price-label">€100</span>
+                            <input 
+                                type="range" 
+                                id="price-range" 
+                                min="0" 
+                                max="100" 
+                                value="100" 
+                                class="w-full" 
+                                oninput="updatePriceValue(this.value)"
+                                onchange="applyFilters()"
+                            >
+                            <span id="price-value">€100</span>
                         </div>
                     </div>
 
@@ -422,76 +422,18 @@
         }
 
         function loadCourts() {
-            const courtsList = document.getElementById('courts-list');
+            const filters = {
+                indoor: document.getElementById('indoor-courts').checked,
+                outdoor: document.getElementById('outdoor-courts').checked
+            };
             
-            courtsList.innerHTML = window.padelApp.courts.map(court => {
-                const latestReview = window.padelApp.getLatestReview(court.id);
-                const features = court.features.map(feature => 
-                    `<span class="bg-gray-100 px-2 py-1 rounded text-sm">${window.padelApp.translateFeature(feature)}</span>`
-                ).join('');
-                
-                return `
-                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="md:col-span-1">
-                                <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-48 object-cover rounded">
-                                <div class="mt-2">
-                                    <div class="text-sm text-gray-600">Populaire tijden vandaag:</div>
-                                    <div class="popular-times-graph flex items-end h-16 space-x-1 mt-1">
-                                        <!-- Popular times bars will be inserted here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="md:col-span-2">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h3 class="text-xl font-bold">${court.name}</h3>
-                                    <div class="flex items-center">
-                                        <div class="text-yellow-400 mr-1">
-                                            <i class="fas fa-star"></i>
-                                        </div>
-                                        <span class="font-semibold">${court.rating}</span>
-                                        <span class="text-gray-600 ml-1">(${court.reviewCount})</span>
-                                    </div>
-                                </div>
-                                <p class="text-gray-600 mb-2">${court.location}</p>
-                                <div class="flex flex-wrap gap-2 mb-4">
-                                    ${features}
-                                </div>
-                                ${latestReview ? `
-                                    <div class="reviews-preview mb-4">
-                                        <div class="text-sm text-gray-600">Laatste beoordeling:</div>
-                                        <div class="flex items-start space-x-2 mt-1">
-                                            <img src="${latestReview.userImage}" alt="Reviewer" class="w-8 h-8 rounded-full">
-                                            <div>
-                                                <div class="font-semibold">${latestReview.userId}</div>
-                                                <div class="text-yellow-400">
-                                                    ${'★'.repeat(latestReview.rating)}${'☆'.repeat(5-latestReview.rating)}
-                                                </div>
-                                                <p class="text-sm text-gray-600">${latestReview.comment}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                                <div class="flex items-center justify-between mt-4">
-                                    <div>
-                                        <span class="text-2xl font-bold">€${court.pricePerHour}</span>
-                                        <span class="text-gray-600">/uur</span>
-                                    </div>
-                                    <button 
-                                        onclick="window.padelApp.openBooking(${court.id})" 
-                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                                    >
-                                        Nu Boeken
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            const filteredCourts = window.padelApp.filterCourts(filters);
+            updateCourtsList(filteredCourts);
             
-            // Update popular times for each court
-            window.padelApp.courts.forEach(court => updatePopularTimes(court.id));
+            // Update map markers
+            if (typeof window.padelApp.updateMapMarkers === 'function') {
+                window.padelApp.updateMapMarkers(filteredCourts);
+            }
         }
 
         function updateModalContent(court) {
@@ -616,12 +558,20 @@
                                         <span class="text-2xl font-bold">€${court.pricePerHour}</span>
                                         <span class="text-gray-600">/uur</span>
                                     </div>
-                                    <button 
-                                        onclick="window.padelApp.openBooking(${court.id})" 
-                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                                    >
-                                        Nu Boeken
-                                    </button>
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${court.coordinates.lat},${court.coordinates.lng}', '_blank')"
+                                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+                                        >
+                                            <i class="fas fa-directions mr-1"></i> Route
+                                        </button>
+                                        <button 
+                                            onclick="window.padelApp.openBooking(${court.id})" 
+                                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                        >
+                                            Nu Boeken
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -633,8 +583,8 @@
             filteredCourts.forEach(court => updatePopularTimes(court.id));
         }
 
-        function updatePriceLabel(value) {
-            document.getElementById('price-label').textContent = `€${value}`;
+        function updatePriceValue(value) {
+            document.getElementById('price-value').textContent = `€${value}`;
         }
 
         function applyFilters() {
@@ -658,11 +608,30 @@
 
             // Apply filters and update the display
             const filteredCourts = window.padelApp.filterCourts(filters);
-            updateCourtsList(filteredCourts);
+            
+            // Always show the courts list, even if empty
+            const courtsList = document.getElementById('courts-list');
+            if (filteredCourts.length === 0) {
+                courtsList.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-gray-500">Geen banen gevonden met deze filters.</p>
+                        <p class="text-gray-500">Pas je filters aan om meer banen te zien.</p>
+                    </div>
+                `;
+            } else {
+                updateCourtsList(filteredCourts);
+            }
+
+            // Update map markers if the map is initialized
             if (typeof updateMapMarkers === 'function') {
                 updateMapMarkers(filteredCourts);
             }
         }
+
+        // Add event listener for price range input
+        document.getElementById('price-range').addEventListener('input', function() {
+            applyFilters();
+        });
 
         function updateCourtsList(courts) {
             const courtsList = document.getElementById('courts-list');
@@ -670,6 +639,9 @@
 
             courtsList.innerHTML = courts.map(court => {
                 const latestReview = window.padelApp.getLatestReview(court.id);
+                const features = court.features.map(feature => 
+                    `<span class="bg-gray-100 px-2 py-1 rounded text-sm">${window.padelApp.translateFeature(feature)}</span>`
+                ).join('');
                 
                 if (isMobile) {
                     return `
@@ -690,28 +662,102 @@
                                 </div>
                                 <div class="flex justify-between items-center mt-4">
                                     <span class="text-xl font-bold">€${court.pricePerHour}/uur</span>
-                                    <button 
-                                        onclick="window.padelApp.openBooking(${court.id})" 
-                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg"
-                                    >
-                                        Boeken
-                                    </button>
+                                    <div class="flex gap-2">
+                                        <button 
+                                            onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${court.coordinates.lat},${court.coordinates.lng}', '_blank')"
+                                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+                                        >
+                                            <i class="fas fa-directions mr-1"></i> Route
+                                        </button>
+                                        <button 
+                                            onclick="window.padelApp.openBooking(${court.id})" 
+                                            class="bg-blue-600 text-white px-6 py-2 rounded-lg"
+                                        >
+                                            Boeken
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 } else {
-                    // Return existing desktop template
                     return `
                         <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                            <!-- ... existing desktop template ... -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1">
+                                    <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-48 object-cover rounded">
+                                    <div class="mt-2">
+                                        <div class="text-sm text-gray-600">Populaire tijden vandaag:</div>
+                                        <div class="popular-times-graph flex items-end h-16 space-x-1 mt-1">
+                                            <!-- Popular times bars will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="text-xl font-bold">${court.name}</h3>
+                                        <div class="flex items-center">
+                                            <div class="text-yellow-400 mr-1">
+                                                <i class="fas fa-star"></i>
+                                            </div>
+                                            <span class="font-semibold">${court.rating}</span>
+                                            <span class="text-gray-600 ml-1">(${court.reviewCount})</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-600 mb-2">${court.location}</p>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        ${features}
+                                    </div>
+                                    ${latestReview ? `
+                                        <div class="reviews-preview mb-4">
+                                            <div class="text-sm text-gray-600">Laatste beoordeling:</div>
+                                            <div class="flex items-start space-x-2 mt-1">
+                                                <img src="${latestReview.userImage}" alt="Reviewer" class="w-8 h-8 rounded-full">
+                                                <div>
+                                                    <div class="font-semibold">${latestReview.userId}</div>
+                                                    <div class="text-yellow-400">
+                                                        ${'★'.repeat(latestReview.rating)}
+                                                        ${'☆'.repeat(5-latestReview.rating)}
+                                                    </div>
+                                                    <p class="text-sm text-gray-600">${latestReview.comment}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    <div class="flex items-center justify-between mt-4">
+                                        <div>
+                                            <span class="text-2xl font-bold">€${court.pricePerHour}</span>
+                                            <span class="text-gray-600">/uur</span>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button 
+                                                onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${court.coordinates.lat},${court.coordinates.lng}', '_blank')"
+                                                class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+                                            >
+                                                <i class="fas fa-directions mr-1"></i> Route
+                                            </button>
+                                            <button 
+                                                onclick="window.padelApp.openBooking(${court.id})" 
+                                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                            >
+                                                Nu Boeken
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
             }).join('');
             
             // Update popular times for each court
-            courts.forEach(court => updatePopularTimes(court.id));
+            courts.forEach(court => {
+                const popularTimesElement = document.getElementById(`popular-times-${court.id}`);
+                if (popularTimesElement) {
+                    updatePopularTimes(court.id);
+                }
+            });
         }
 
         // Mobile-specific functions

@@ -26,51 +26,27 @@ const filterCourts = (filters = {}) => {
         }
 
         // Court type filter (indoor/outdoor)
-        if (window.innerWidth < 768) {
-            // Mobile filtering using chips
-            const indoorChip = document.querySelector('[onclick="toggleFilter(\'indoor\')"]');
-            const outdoorChip = document.querySelector('[onclick="toggleFilter(\'outdoor\')"]');
-            const isIndoorSelected = indoorChip.classList.contains('active');
-            const isOutdoorSelected = outdoorChip.classList.contains('active');
+        if (filters.indoor && !filters.outdoor) {
+            if (court.courtType !== window.padelApp.FEATURES.INDOOR) return false;
+        } else if (!filters.indoor && filters.outdoor) {
+            if (court.courtType !== window.padelApp.FEATURES.OUTDOOR) return false;
+        } else if (!filters.indoor && !filters.outdoor) {
+            return false;
+        }
 
-            if (isIndoorSelected && !isOutdoorSelected) {
-                if (court.courtType !== window.padelApp.FEATURES.INDOOR) return false;
-            } else if (!isIndoorSelected && isOutdoorSelected) {
-                if (court.courtType !== window.padelApp.FEATURES.OUTDOOR) return false;
-            } else if (!isIndoorSelected && !isOutdoorSelected) {
-                return false;
-            }
+        // Price filter
+        if (typeof filters.maxPrice === 'number' && !isNaN(filters.maxPrice)) {
+            if (court.pricePerHour > filters.maxPrice) return false;
+        }
 
-            // Mobile facility filters
-            const parkingChip = document.querySelector('[onclick="toggleFilter(\'parking\')"]');
-            const showersChip = document.querySelector('[onclick="toggleFilter(\'showers\')"]');
-            const rentalChip = document.querySelector('[onclick="toggleFilter(\'rental\')"]');
+        // Rating filter
+        if (filters.minRating && court.rating < filters.minRating) return false;
 
-            if (parkingChip.classList.contains('active') && !court.features.includes(window.padelApp.FEATURES.PARKING)) return false;
-            if (showersChip.classList.contains('active') && !court.features.includes(window.padelApp.FEATURES.SHOWERS)) return false;
-            if (rentalChip.classList.contains('active') && !court.features.includes(window.padelApp.FEATURES.EQUIPMENT_RENTAL)) return false;
-        } else {
-            // Desktop filtering using checkboxes
-            if (filters.indoor && !filters.outdoor) {
-                if (court.courtType !== window.padelApp.FEATURES.INDOOR) return false;
-            } else if (!filters.indoor && filters.outdoor) {
-                if (court.courtType !== window.padelApp.FEATURES.OUTDOOR) return false;
-            } else if (!filters.indoor && !filters.outdoor) {
-                return false;
-            }
-
-            // Price filter
-            if (filters.maxPrice && court.pricePerHour > filters.maxPrice) return false;
-
-            // Rating filter
-            if (filters.minRating && court.rating < filters.minRating) return false;
-
-            // Features filter
-            if (filters.features && filters.features.length > 0) {
-                for (const feature of filters.features) {
-                    if (!court.features.includes(feature)) {
-                        return false;
-                    }
+        // Features filter
+        if (filters.features && filters.features.length > 0) {
+            for (const feature of filters.features) {
+                if (!court.features.includes(feature)) {
+                    return false;
                 }
             }
         }

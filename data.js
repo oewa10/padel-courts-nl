@@ -170,6 +170,68 @@ const courts = [
             lat: 52.3508,
             lng: 5.2647
         }
+    },
+    {
+        id: 9,
+        name: "padel33",
+        location: "Amersfoort",
+        pricePerHour: 35,
+        courtType: FEATURES.OUTDOOR,
+        rating: 4.5,
+        reviewCount: 82,
+        features: [
+            FEATURES.OUTDOOR,
+            FEATURES.PARKING,
+            FEATURES.SHOWERS,
+            FEATURES.EQUIPMENT_RENTAL,
+            FEATURES.RESTAURANT
+        ],
+        description: "Padel33 beschikt over zes outdoor padelbanen. Er zijn kleedkamers en douches beschikbaar voor spelers. Parkeergelegenheid is aanwezig op het terrein. Er is een horecagelegenheid voor eten en drinken. Rackets en ballen zijn te huur.",
+        imageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&auto=format&fit=crop",
+        coordinates: {
+            lat: 52.1917,
+            lng: 5.3878
+        },
+        popularTimes: {
+            "Monday": [20, 30, 40, 45, 50, 60, 70, 80, 85, 80, 70, 60, 50, 40],
+            "Tuesday": [25, 35, 45, 50, 55, 65, 75, 85, 90, 85, 75, 65, 55, 45],
+            "Wednesday": [30, 40, 50, 55, 60, 70, 80, 90, 95, 90, 80, 70, 60, 50],
+            "Thursday": [35, 45, 55, 60, 65, 75, 85, 95, 100, 95, 85, 75, 65, 55],
+            "Friday": [40, 50, 60, 65, 70, 80, 90, 100, 100, 100, 90, 80, 70, 60],
+            "Saturday": [45, 55, 65, 70, 75, 85, 95, 100, 100, 100, 95, 85, 75, 65],
+            "Sunday": [35, 45, 55, 60, 65, 75, 85, 95, 100, 95, 85, 75, 65, 55]
+        }
+    },
+    {
+        id: 10,
+        name: "LTC Vathorst",
+        location: "Amersfoort",
+        pricePerHour: 32,
+        courtType: FEATURES.OUTDOOR,
+        rating: 4.4,
+        reviewCount: 65,
+        features: [
+            FEATURES.OUTDOOR,
+            FEATURES.PARKING,
+            FEATURES.SHOWERS,
+            FEATURES.EQUIPMENT_RENTAL,
+            FEATURES.CAFE
+        ],
+        description: "LTC Vathorst heeft vier outdoor padelbanen. Leden kunnen gebruikmaken van kleedkamers en douches. Er is voldoende parkeergelegenheid bij de club. Een clubhuis biedt drankjes en lichte maaltijden. Rackets zijn te huur voor leden en gasten.",
+        imageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&auto=format&fit=crop",
+        coordinates: {
+            lat: 52.1926,
+            lng: 5.4021
+        },
+        popularTimes: {
+            "Monday": [20, 30, 40, 45, 50, 60, 70, 80, 85, 80, 70, 60, 50, 40],
+            "Tuesday": [25, 35, 45, 50, 55, 65, 75, 85, 90, 85, 75, 65, 55, 45],
+            "Wednesday": [30, 40, 50, 55, 60, 70, 80, 90, 95, 90, 80, 70, 60, 50],
+            "Thursday": [35, 45, 55, 60, 65, 75, 85, 95, 100, 95, 85, 75, 65, 55],
+            "Friday": [40, 50, 60, 65, 70, 80, 90, 100, 100, 100, 90, 80, 70, 60],
+            "Saturday": [45, 55, 65, 70, 75, 85, 95, 100, 100, 100, 95, 85, 75, 65],
+            "Sunday": [35, 45, 55, 60, 65, 75, 85, 95, 100, 95, 85, 75, 65, 55]
+        }
     }
 ];
 
