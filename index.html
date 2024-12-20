@@ -12,7 +12,7 @@
     <script src="data.js"></script>
     <script src="map.js"></script>
     <script src="app.js"></script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDR8_tH-6eILzcmUC_Z08b0NFz-KHmyiA4&libraries=places,geometry&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDR8_tH-6eILzcmUC_Z08b0NFz-KHmyiA4&libraries=places,geometry&callback=initMap"></script>
     <style>
         .map-container {
             height: 400px;
@@ -270,67 +270,6 @@
         </div>
     </div>
 
-    <template id="court-template">
-        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-1">
-                    <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-48 object-cover rounded">
-                    <div class="mt-2">
-                        <div class="text-sm text-gray-600">Populaire tijden vandaag:</div>
-                        <div class="popular-times-graph flex items-end h-16 space-x-1 mt-1">
-                            <!-- Popular times bars will be inserted here -->
-                        </div>
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-xl font-bold">${court.name}</h3>
-                        <div class="flex items-center">
-                            <div class="text-yellow-400 mr-1">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <span class="font-semibold">${court.rating}</span>
-                            <span class="text-gray-600 ml-1">(${court.reviewCount})</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-2">${court.location}</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        ${court.features.map(feature => 
-                            `<span class="bg-gray-100 px-2 py-1 rounded text-sm">${feature}</span>`
-                        ).join('')}
-                    </div>
-                    <div class="reviews-preview mb-4">
-                        <!-- Latest review preview -->
-                        <div class="text-sm text-gray-600">Laatste beoordeling:</div>
-                        <div class="flex items-start space-x-2 mt-1">
-                            <img src="${latestReview.userImage}" alt="Reviewer" class="w-8 h-8 rounded-full">
-                            <div>
-                                <div class="font-semibold">${latestReview.userId}</div>
-                                <div class="text-yellow-400">
-                                    ${'★'.repeat(latestReview.rating)}
-                                    ${'☆'.repeat(5-latestReview.rating)}
-                                </div>
-                                <p class="text-sm text-gray-600">${latestReview.comment}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between mt-4">
-                        <div>
-                            <span class="text-2xl font-bold">€${court.pricePerHour}</span>
-                            <span class="text-gray-600">/uur</span>
-                        </div>
-                        <button 
-                            onclick="openBooking(${court.id})" 
-                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                        >
-                            Nu Boeken
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
     <script>
         let currentView = 'list';
         let selectedCourtId = null;
@@ -389,13 +328,72 @@
 
         function loadCourts() {
             const courtsList = document.getElementById('courts-list');
-            const template = document.getElementById('court-template');
             
             courtsList.innerHTML = window.padelApp.courts.map(court => {
-                const latestReview = window.padelApp.getReviewsForCourt(court.id)[0];
-                return template.innerHTML
-                    .replace(/\${court\.(\w+)}/g, (_, prop) => court[prop])
-                    .replace(/\${latestReview\.(\w+)}/g, (_, prop) => latestReview ? latestReview[prop] : '');
+                const latestReview = window.padelApp.getLatestReview(court.id);
+                const features = court.features.map(feature => 
+                    `<span class="bg-gray-100 px-2 py-1 rounded text-sm">${window.padelApp.translateFeature(feature)}</span>`
+                ).join('');
+                
+                return `
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-1">
+                                <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-48 object-cover rounded">
+                                <div class="mt-2">
+                                    <div class="text-sm text-gray-600">Populaire tijden vandaag:</div>
+                                    <div class="popular-times-graph flex items-end h-16 space-x-1 mt-1">
+                                        <!-- Popular times bars will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-xl font-bold">${court.name}</h3>
+                                    <div class="flex items-center">
+                                        <div class="text-yellow-400 mr-1">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <span class="font-semibold">${court.rating}</span>
+                                        <span class="text-gray-600 ml-1">(${court.reviewCount})</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 mb-2">${court.location}</p>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    ${features}
+                                </div>
+                                ${latestReview ? `
+                                    <div class="reviews-preview mb-4">
+                                        <div class="text-sm text-gray-600">Laatste beoordeling:</div>
+                                        <div class="flex items-start space-x-2 mt-1">
+                                            <img src="${latestReview.userImage}" alt="Reviewer" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <div class="font-semibold">${latestReview.userId}</div>
+                                                <div class="text-yellow-400">
+                                                    ${'★'.repeat(latestReview.rating)}
+                                                    ${'☆'.repeat(5-latestReview.rating)}
+                                                </div>
+                                                <p class="text-sm text-gray-600">${latestReview.comment}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="flex items-center justify-between mt-4">
+                                    <div>
+                                        <span class="text-2xl font-bold">€${court.pricePerHour}</span>
+                                        <span class="text-gray-600">/uur</span>
+                                    </div>
+                                    <button 
+                                        onclick="window.padelApp.openBooking(${court.id})" 
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        Nu Boeken
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }).join('');
             
             // Update popular times for each court
