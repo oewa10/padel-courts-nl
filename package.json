@@ -1,0 +1,16 @@
+{
+  "name": "padel-courts-nl",
+  "version": "1.0.0",
+  "description": "The ultimate platform for booking padel courts in the Netherlands. BaantjeBoeken makes it easy to find and book padel courts near you, with real-time availability and instant confirmation.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

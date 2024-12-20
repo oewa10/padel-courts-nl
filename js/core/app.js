@@ -58,8 +58,27 @@ const App = {
         this.booking = new BookingFeature();
         this.map = new MapFeature();
         
-        // Initial data load
+        // Load initial data
         this.loadInitialData();
+        
+        // Make app instance available globally
+        window.App = this;
+        
+        // Check URL parameters for initial search
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialLocation = urlParams.get('location');
+        
+        if (initialLocation) {
+            // If we have a location parameter, hide welcome screen and show search section
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('search-section').classList.remove('hidden');
+            document.getElementById('location-search').value = initialLocation;
+            window.App.search.performSearch(initialLocation);
+        } else {
+            // Otherwise show welcome screen and hide search section
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('search-section').classList.add('hidden');
+        }
         
         // Set initial view
         this.switchView('list');
@@ -119,9 +138,6 @@ const App = {
 document.addEventListener('DOMContentLoaded', () => {
     App.initialize();
 });
-
-// Make App globally available
-window.App = App;
 
 // Export for use in other modules
 export { App, AppState, courts };
