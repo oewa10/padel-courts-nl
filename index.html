@@ -12,17 +12,85 @@
     <script src="data.js"></script>
     <script src="map.js"></script>
     <script src="app.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDR8_tH-6eILzcmUC_Z08b0NFz-KHmyiA4&libraries=places,geometry&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDR8_tH-6eILzcmUC_Z08b0NFz-KHmyiA4&libraries=geometry&callback=initMap"></script>
     <style>
         .map-container {
             height: 400px;
             width: 100%;
         }
+        @media (max-width: 768px) {
+            .mobile-search {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 50;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .mobile-content {
+                margin-top: 8rem;
+            }
+            .mobile-card {
+                border-radius: 1rem;
+                margin-bottom: 1rem;
+                overflow: hidden;
+            }
+            .mobile-card img {
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+            }
+            .mobile-filters {
+                display: flex;
+                overflow-x: auto;
+                padding: 0.5rem;
+                gap: 0.5rem;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .mobile-filter-chip {
+                padding: 0.5rem 1rem;
+                background: #f3f4f6;
+                border-radius: 9999px;
+                font-size: 0.875rem;
+                white-space: nowrap;
+            }
+            .mobile-filter-chip.active {
+                background: #2563eb;
+                color: white;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+    <!-- Mobile Search Bar -->
+    <div class="md:hidden mobile-search">
+        <div class="relative mb-4">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <input 
+                type="text" 
+                id="location-search" 
+                placeholder="Waar wil je padellen?" 
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-700"
+                list="dutch-cities"
+                autocomplete="off"
+            >
+            <datalist id="dutch-cities"></datalist>
+        </div>
+        <!-- Mobile Filter Chips -->
+        <div class="mobile-filters">
+            <button class="mobile-filter-chip" onclick="toggleFilter('indoor')">Indoor</button>
+            <button class="mobile-filter-chip" onclick="toggleFilter('outdoor')">Buiten</button>
+            <button class="mobile-filter-chip" onclick="toggleFilter('parking')">Parkeren</button>
+            <button class="mobile-filter-chip" onclick="toggleFilter('showers')">Douches</button>
+            <button class="mobile-filter-chip" onclick="toggleFilter('rental')">Verhuur</button>
+        </div>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <nav class="hidden md:block bg-white shadow-lg">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
@@ -39,20 +107,30 @@
     </nav>
 
     <!-- Search Hero Section -->
-    <div class="bg-blue-600 text-white py-16">
+    <div class="hidden md:block bg-blue-600 text-white py-16">
         <div class="container mx-auto px-4">
             <h1 class="text-4xl md:text-5xl font-bold mb-6">Vind en Reserveer Padelbanen</h1>
             <div class="bg-white rounded-lg p-4 shadow-lg max-w-4xl">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" placeholder="Locatie" class="w-full pl-10 pr-4 py-2 border rounded-lg" id="location-search">
+                        <input 
+                            type="text" 
+                            id="location-search" 
+                            placeholder="Locatie" 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-700"
+                            list="dutch-cities"
+                            autocomplete="off"
+                        >
+                        <datalist id="dutch-cities">
+                            <!-- Will be populated with Dutch cities -->
+                        </datalist>
                     </div>
                     <div class="relative">
-                        <i class="far fa-calendar absolute left-3 top-3 text-gray-400"></i>
-                        <input type="date" class="w-full pl-10 pr-4 py-2 border rounded-lg" id="date-picker">
+                        <i class="fas fa-calendar absolute left-3 top-3 text-gray-400"></i>
+                        <input type="date" id="date-picker" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-700">
                     </div>
-                    <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    <button onclick="searchCourts()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                         Zoeken
                     </button>
                 </div>
@@ -74,60 +152,78 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-8">
+    <div class="mobile-content container mx-auto px-4 py-8">
         <!-- Filters -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="md:col-span-1">
                 <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-bold text-lg mb-4">Filters</h3>
+                    <h3 class="text-lg font-semibold mb-4">Filters</h3>
                     
-                    <div class="space-y-4">
-                        <div>
-                            <h4 class="font-semibold mb-2">Prijsklasse</h4>
-                            <input type="range" min="0" max="100" class="w-full" id="price-range">
-                            <div class="flex justify-between text-sm text-gray-600">
-                                <span>€0</span>
-                                <span>€100</span>
-                            </div>
+                    <!-- Price Range -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-2">Prijsklasse</h4>
+                        <input 
+                            type="range" 
+                            id="price-range" 
+                            min="0" 
+                            max="100" 
+                            value="100"
+                            class="w-full"
+                            oninput="updatePriceLabel(this.value)"
+                            onchange="applyFilters()"
+                        >
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>€0</span>
+                            <span id="price-label">€100</span>
                         </div>
+                    </div>
 
-                        <div>
-                            <h4 class="font-semibold mb-2">Baan Type</h4>
-                            <div class="space-y-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> Overdekt
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> Buiten
-                                </label>
-                            </div>
+                    <!-- Court Type -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-2">Baan Type</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="indoor-courts" class="mr-2" onchange="applyFilters()" checked>
+                                <span>Indoor</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="outdoor-courts" class="mr-2" onchange="applyFilters()" checked>
+                                <span>Buiten</span>
+                            </label>
                         </div>
+                    </div>
 
-                        <div>
-                            <h4 class="font-semibold mb-2">Beoordeling</h4>
-                            <div class="space-y-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> 4+ Sterren
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> 3+ Sterren
-                                </label>
-                            </div>
+                    <!-- Rating -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-2">Beoordeling</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="rating-4plus" class="mr-2" onchange="applyFilters()">
+                                <span>4+ Sterren</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="rating-3plus" class="mr-2" onchange="applyFilters()">
+                                <span>3+ Sterren</span>
+                            </label>
                         </div>
+                    </div>
 
-                        <div>
-                            <h4 class="font-semibold mb-2">Faciliteiten</h4>
-                            <div class="space-y-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> Parkeergelegenheid
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> Douches
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" class="mr-2"> Uitrusting Verhuur
-                                </label>
-                            </div>
+                    <!-- Facilities -->
+                    <div>
+                        <h4 class="font-medium mb-2">Faciliteiten</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="feature-parking" class="mr-2" onchange="applyFilters()">
+                                <span>Parkeergelegenheid</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="feature-showers" class="mr-2" onchange="applyFilters()">
+                                <span>Douches</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="feature-rental" class="mr-2" onchange="applyFilters()">
+                                <span>Uitrusting Verhuur</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -212,8 +308,7 @@
                             <i class="fas fa-star"></i>
                         </div>
                         <span id="modal-court-rating" class="font-semibold"></span>
-                        <span class="mx-2">•</span>
-                        <span id="modal-court-location" class="text-gray-600"></span>
+                        <span class="text-gray-600 ml-1">(${window.padelApp.getReviewsForCourt(selectedCourtId).length})</span>
                     </div>
                     <div id="modal-court-features" class="space-y-2 text-gray-600">
                         <!-- Features will be populated here -->
@@ -370,8 +465,7 @@
                                             <div>
                                                 <div class="font-semibold">${latestReview.userId}</div>
                                                 <div class="text-yellow-400">
-                                                    ${'★'.repeat(latestReview.rating)}
-                                                    ${'☆'.repeat(5-latestReview.rating)}
+                                                    ${'★'.repeat(latestReview.rating)}${'☆'.repeat(5-latestReview.rating)}
                                                 </div>
                                                 <p class="text-sm text-gray-600">${latestReview.comment}</p>
                                             </div>
@@ -445,6 +539,212 @@
             ).join('');
         }
 
+        function searchCourts() {
+            const location = document.getElementById('location-search').value;
+            const date = document.getElementById('date-picker').value;
+            
+            // Format the date for display
+            const formattedDate = date ? new Date(date).toLocaleDateString('nl-NL', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : '';
+            
+            // Update the courts list based on the search criteria
+            const filteredCourts = window.padelApp.filterCourts({
+                location: location
+            });
+            
+            // Update the map markers
+            if (typeof updateMapMarkers === 'function') {
+                updateMapMarkers(filteredCourts);
+            }
+            
+            // Update the courts list
+            const courtsList = document.getElementById('courts-list');
+            courtsList.innerHTML = filteredCourts.map(court => {
+                const latestReview = window.padelApp.getLatestReview(court.id);
+                const features = court.features.map(feature => 
+                    `<span class="bg-gray-100 px-2 py-1 rounded text-sm">${window.padelApp.translateFeature(feature)}</span>`
+                ).join('');
+                
+                return `
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-1">
+                                <img src="${court.imageUrl}" alt="${court.name}" class="w-full h-48 object-cover rounded">
+                                <div class="mt-2">
+                                    <div class="text-sm text-gray-600">Populaire tijden vandaag:</div>
+                                    <div class="popular-times-graph flex items-end h-16 space-x-1 mt-1">
+                                        <!-- Popular times bars will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-xl font-bold">${court.name}</h3>
+                                    <div class="flex items-center">
+                                        <div class="text-yellow-400 mr-1">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <span class="font-semibold">${court.rating}</span>
+                                        <span class="text-gray-600 ml-1">(${court.reviewCount})</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 mb-2">${court.location}</p>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    ${features}
+                                </div>
+                                ${latestReview ? `
+                                    <div class="reviews-preview mb-4">
+                                        <div class="text-sm text-gray-600">Laatste beoordeling:</div>
+                                        <div class="flex items-start space-x-2 mt-1">
+                                            <img src="${latestReview.userImage}" alt="Reviewer" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <div class="font-semibold">${latestReview.userId}</div>
+                                                <div class="text-yellow-400">
+                                                    ${'★'.repeat(latestReview.rating)}${'☆'.repeat(5-latestReview.rating)}
+                                                </div>
+                                                <p class="text-sm text-gray-600">${latestReview.comment}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="flex items-center justify-between mt-4">
+                                    <div>
+                                        <span class="text-2xl font-bold">€${court.pricePerHour}</span>
+                                        <span class="text-gray-600">/uur</span>
+                                    </div>
+                                    <button 
+                                        onclick="window.padelApp.openBooking(${court.id})" 
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        Nu Boeken
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update popular times for each court
+            filteredCourts.forEach(court => updatePopularTimes(court.id));
+        }
+
+        function updatePriceLabel(value) {
+            document.getElementById('price-label').textContent = `€${value}`;
+        }
+
+        function applyFilters() {
+            const filters = {
+                maxPrice: parseInt(document.getElementById('price-range').value),
+                indoor: document.getElementById('indoor-courts').checked,
+                outdoor: document.getElementById('outdoor-courts').checked,
+                minRating: document.getElementById('rating-4plus').checked ? 4 :
+                          document.getElementById('rating-3plus').checked ? 3 : 0,
+                features: []
+            };
+
+            // Add selected features to the filters
+            if (document.getElementById('feature-parking').checked) filters.features.push(window.padelApp.FEATURES.PARKING);
+            if (document.getElementById('feature-showers').checked) filters.features.push(window.padelApp.FEATURES.SHOWERS);
+            if (document.getElementById('feature-rental').checked) filters.features.push(window.padelApp.FEATURES.EQUIPMENT_RENTAL);
+
+            // Get the current location search value
+            const location = document.getElementById('location-search').value;
+            if (location) filters.location = location;
+
+            // Apply filters and update the display
+            const filteredCourts = window.padelApp.filterCourts(filters);
+            updateCourtsList(filteredCourts);
+            if (typeof updateMapMarkers === 'function') {
+                updateMapMarkers(filteredCourts);
+            }
+        }
+
+        function updateCourtsList(courts) {
+            const courtsList = document.getElementById('courts-list');
+            const isMobile = window.innerWidth < 768;
+
+            courtsList.innerHTML = courts.map(court => {
+                const latestReview = window.padelApp.getLatestReview(court.id);
+                
+                if (isMobile) {
+                    return `
+                        <div class="mobile-card bg-white shadow">
+                            <img src="${court.imageUrl}" alt="${court.name}" class="w-full">
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-lg font-semibold">${court.name}</h3>
+                                        <p class="text-gray-600 text-sm">${court.location}</p>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="text-yellow-400 mr-1">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <span class="font-semibold">${court.rating}</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="text-xl font-bold">€${court.pricePerHour}/uur</span>
+                                    <button 
+                                        onclick="window.padelApp.openBooking(${court.id})" 
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg"
+                                    >
+                                        Boeken
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Return existing desktop template
+                    return `
+                        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                            <!-- ... existing desktop template ... -->
+                        </div>
+                    `;
+                }
+            }).join('');
+            
+            // Update popular times for each court
+            courts.forEach(court => updatePopularTimes(court.id));
+        }
+
+        // Mobile-specific functions
+        function toggleFilter(type) {
+            const chip = event.target;
+            chip.classList.toggle('active');
+            applyFilters();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDutchCities();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date-picker').value = today;
+            loadCourts();
+
+            // Handle mobile responsiveness
+            window.addEventListener('resize', () => {
+                const filteredCourts = window.padelApp.filterCourts({
+                    indoor: document.getElementById('indoor-courts').checked,
+                    outdoor: document.getElementById('outdoor-courts').checked
+                });
+                updateCourtsList(filteredCourts);
+            });
+        });
+
+        // Handle date changes
+        document.getElementById('booking-date').addEventListener('change', (e) => {
+            if (selectedCourtId) {
+                loadAvailability(selectedCourtId, e.target.value);
+            }
+        });
+
         document.getElementById('booking-form').onsubmit = (e) => {
             e.preventDefault();
             
@@ -464,23 +764,6 @@
             closeModal();
             loadAvailability(selectedCourtId, date);
         };
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set default date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('date-picker').value = today;
-            
-            // Load courts
-            loadCourts();
-        });
-
-        // Handle date changes
-        document.getElementById('booking-date').addEventListener('change', (e) => {
-            if (selectedCourtId) {
-                loadAvailability(selectedCourtId, e.target.value);
-            }
-        });
     </script>
 </body>
 </html>

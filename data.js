@@ -1,3 +1,16 @@
+// Feature constants
+const FEATURES = {
+    INDOOR: 'indoor',
+    OUTDOOR: 'outdoor',
+    LIGHTING: 'lighting',
+    SHOWERS: 'showers',
+    PARKING: 'parking',
+    RESTAURANT: 'restaurant',
+    EQUIPMENT_RENTAL: 'equipment-rental',
+    PRO_TRAINING: 'pro-training',
+    CAFE: 'cafe'
+};
+
 // Courts data
 const courts = [
     {
@@ -5,11 +18,17 @@ const courts = [
         name: "Padel Factory Amsterdam",
         location: "Amsterdam",
         pricePerHour: 40,
-        indoor: true,
+        courtType: FEATURES.INDOOR,
         rating: 4.8,
         reviewCount: 127,
-        features: ["indoor", "lighting", "showers", "parking", "restaurant"],
-        imageUrl: "https://padelfactory.nl/wp-content/uploads/2023/01/padel-factory-amsterdam.jpg",
+        features: [
+            FEATURES.INDOOR,
+            FEATURES.LIGHTING,
+            FEATURES.SHOWERS,
+            FEATURES.PARKING,
+            FEATURES.RESTAURANT
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 52.3676,
             lng: 4.9041
@@ -29,11 +48,15 @@ const courts = [
         name: "Padel Club Rotterdam",
         location: "Rotterdam",
         pricePerHour: 38,
-        indoor: false,
+        courtType: FEATURES.OUTDOOR,
         rating: 4.6,
         reviewCount: 89,
-        features: ["outdoor", "lighting", "parking"],
-        imageUrl: "https://www.padelclub.rotterdam/wp-content/uploads/2023/02/padel-rotterdam.jpg",
+        features: [
+            FEATURES.OUTDOOR,
+            FEATURES.LIGHTING,
+            FEATURES.PARKING
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 51.9225,
             lng: 4.4792
@@ -53,11 +76,16 @@ const courts = [
         name: "Utrecht Padel Academy",
         location: "Utrecht",
         pricePerHour: 42,
-        indoor: true,
+        courtType: FEATURES.INDOOR,
         rating: 4.9,
         reviewCount: 203,
-        features: ["Indoor Courts", "Free Parking", "Pro Training", "Equipment Rental", "Cafe"],
-        imageUrl: "https://images.unsplash.com/photo-1632505084024-79f79943e5d3?w=800&auto=format",
+        features: [
+            FEATURES.INDOOR,
+            FEATURES.EQUIPMENT_RENTAL,
+            FEATURES.PRO_TRAINING,
+            FEATURES.CAFE
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 52.0907,
             lng: 5.1214
@@ -68,11 +96,16 @@ const courts = [
         name: "Eindhoven Padel Center",
         location: "Eindhoven",
         pricePerHour: 36,
-        indoor: false,
+        courtType: FEATURES.OUTDOOR,
         rating: 4.5,
         reviewCount: 167,
-        features: ["Outdoor Courts", "Free Parking", "Night Lighting", "Equipment Rental"],
-        imageUrl: "https://images.unsplash.com/photo-1632505084024-79f79943e5d3?w=800&auto=format",
+        features: [
+            FEATURES.OUTDOOR,
+            FEATURES.PARKING,
+            FEATURES.LIGHTING,
+            FEATURES.EQUIPMENT_RENTAL
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 51.4416,
             lng: 5.4697
@@ -83,11 +116,16 @@ const courts = [
         name: "Groningen Padel Club",
         location: "Groningen",
         pricePerHour: 34,
-        indoor: true,
+        courtType: FEATURES.INDOOR,
         rating: 4.7,
         reviewCount: 142,
-        features: ["Indoor Courts", "Free Parking", "Showers", "Pro Shop"],
-        imageUrl: "https://images.unsplash.com/photo-1632505084024-79f79943e5d3?w=800&auto=format",
+        features: [
+            FEATURES.INDOOR,
+            FEATURES.PARKING,
+            FEATURES.SHOWERS,
+            FEATURES.CAFE
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 53.2194,
             lng: 6.5665
@@ -98,11 +136,16 @@ const courts = [
         name: "Maastricht Padel",
         location: "Maastricht",
         pricePerHour: 37,
-        indoor: false,
+        courtType: FEATURES.OUTDOOR,
         rating: 4.6,
         reviewCount: 98,
-        features: ["Outdoor Courts", "Parking", "Night Lighting", "Restaurant"],
-        imageUrl: "https://images.unsplash.com/photo-1632505084024-79f79943e5d3?w=800&auto=format",
+        features: [
+            FEATURES.OUTDOOR,
+            FEATURES.PARKING,
+            FEATURES.LIGHTING,
+            FEATURES.RESTAURANT
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 50.8514,
             lng: 5.6910
@@ -113,11 +156,16 @@ const courts = [
         name: "Almere Padel Complex",
         location: "Almere",
         pricePerHour: 39,
-        indoor: true,
+        courtType: FEATURES.INDOOR,
         rating: 4.4,
         reviewCount: 76,
-        features: ["Indoor Courts", "Free Parking", "Equipment Rental", "Cafe"],
-        imageUrl: "https://images.unsplash.com/photo-1632505084024-79f79943e5d3?w=800&auto=format",
+        features: [
+            FEATURES.INDOOR,
+            FEATURES.PARKING,
+            FEATURES.EQUIPMENT_RENTAL,
+            FEATURES.CAFE
+        ],
+        imageUrl: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop",
         coordinates: {
             lat: 52.3508,
             lng: 5.2647
@@ -150,17 +198,30 @@ const reviews = [
 // Bookings data
 const bookings = [];
 
+// Dutch cities data
+const dutchCities = [
+    "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", 
+    "Groningen", "Tilburg", "Almere", "Breda", "Nijmegen", 
+    "Enschede", "Apeldoorn", "Haarlem", "Arnhem", "Zaanstad", 
+    "Amersfoort", "Haarlemmermeer", "Den Bosch", "Zoetermeer", "Zwolle",
+    "Maastricht", "Leiden", "Dordrecht", "Ede", "Leeuwarden",
+    "Alphen aan den Rijn", "Alkmaar", "Emmen", "Westland", "Delft",
+    "Venlo", "Deventer", "Sittard-Geleen", "Helmond", "Oss"
+];
+
 // Initialize the window.padelApp object
 window.padelApp = {
     courts,
     reviews,
     bookings,
+    dutchCities,
+    FEATURES,
     getReviewsForCourt: function(courtId) {
         return reviews.filter(review => review.courtId === courtId);
     },
     getLatestReview: function(courtId) {
         const courtReviews = this.getReviewsForCourt(courtId);
-        return courtReviews.length > 0 ? courtReviews[0] : null;
+        return courtReviews.length > 0 ? courtReviews[courtReviews.length - 1] : null;
     },
     addReview: function(review) {
         review.id = reviews.length + 1;
@@ -179,12 +240,15 @@ window.padelApp = {
     },
     translateFeature: function(feature) {
         const translations = {
-            'indoor': 'Overdekt',
-            'outdoor': 'Buiten',
-            'lighting': 'Verlichting',
-            'showers': 'Douches',
-            'parking': 'Parkeren',
-            'restaurant': 'Restaurant'
+            [FEATURES.INDOOR]: 'Indoor',
+            [FEATURES.OUTDOOR]: 'Buiten',
+            [FEATURES.LIGHTING]: 'Verlichting',
+            [FEATURES.SHOWERS]: 'Douches',
+            [FEATURES.PARKING]: 'Parkeergelegenheid',
+            [FEATURES.RESTAURANT]: 'Restaurant',
+            [FEATURES.EQUIPMENT_RENTAL]: 'Uitrusting Verhuur',
+            [FEATURES.PRO_TRAINING]: 'Pro Training',
+            [FEATURES.CAFE]: 'Café'
         };
         return translations[feature] || feature;
     },
